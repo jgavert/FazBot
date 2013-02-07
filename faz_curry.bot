@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bot
+  name="Faz_CurryBot"
+  description="Makes delicious curry."
+  heroname="Hero_Vanya"
+  rootlua="faz_curry.lua"
+  defaultplayername="LetsMakeSomeCurry"
+  precachepath="/heroes/vanya/"
+/>
