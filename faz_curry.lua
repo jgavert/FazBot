@@ -19,6 +19,9 @@ local print, tostring, tremove = _G.print, _G.tostring, _G.table.remove
 herobot.brain.goldTreshold = 0
 herobot.brain.reservingCourier = false
 
+--------------------------------------------------
+--            Hero skill and buylist            --
+--------------------------------------------------
 local levelupOrder = {1, 2, 1, 0, 1,
                       0, 1, 0, 0, 2,
                       2, 2, 4, 3, 3,
@@ -49,9 +52,20 @@ local carryItems = {
   'Item_Immunity'
 }
 
+
+function herobot:SkillBuildWhatNext()
+  --herobot.chat:AllChat("Leveled up! My team was " .. herobot.brain.hero:GetTeam())
+  local nlev = self.brain.hero:GetLevel()
+  return self.brain.hero:GetAbility( levelupOrder[nlev] )
+end
+
+--local nextChat = HoN.GetGameTime() + 1000
+
 local tpStone = HoN.GetItemDefinition("Item_HomecomingStone")
 
--- Function to get Next item what we should buy
+--------------------------------------------------
+--              Item Handling code              --
+--------------------------------------------------
 local function getNextItemToBuy()
   return HoN.GetItemDefinition(itemsToBuy[1]) or tpStone
 end
@@ -87,27 +101,12 @@ function herobot:PerformShop()
     tremove(itemsToBuy, 1)
   end
   updateTreshold(self)
-  Echo("My current treshold: "..tostring(self.brain.goldTreshold))
+  Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
 end
 
-function herobot:SkillBuildWhatNext()
-  --herobot.chat:AllChat("Leveled up! My team was " .. herobot.brain.hero:GetTeam())
-  local nlev = self.brain.hero:GetLevel()
-  return self.brain.hero:GetAbility( levelupOrder[nlev] )
-end
-
-local nextChat = HoN.GetGameTime() + 1000
-
-local function printInventory(inventory)
-  for i = 1, 12, 1  do
-    local curItem = inventory[i]
-    if curItem then
-      print(tostring(i)..', '..curItem:GetName()..'\n')
-    else
-      print(tostring(i)..', nil\n')
-    end
-  end
-end
+--------------------------------------------------
+--                     UTILS                    --
+--------------------------------------------------
 
 local function canSeeEnemy(bot)
   local localUnitsSorted = bot:GetLocalUnitsSorted()
@@ -146,6 +145,29 @@ local function canSeeEnemy(bot)
   return false
 end
 
+function herobot:PrintStates()
+  local unit = self.brain.hero
+  local behavior = unit:GetBehavior()
+  if behavior then
+    --Echo(behavior:GetType())
+  end
+end
+
+local function printInventory(inventory)
+  for i = 1, 12, 1  do
+    local curItem = inventory[i]
+    if curItem then
+      print(tostring(i)..', '..curItem:GetName()..'\n')
+    else
+      print(tostring(i)..', nil\n')
+    end
+  end
+end
+
+--------------------------------------------------
+--                    onThink                   --
+--------------------------------------------------
+
 function herobot:onthinkCustom(tGameVariables)
   --Echo("Alive!")
   --if not self.brain.myLane then
@@ -175,6 +197,9 @@ function herobot:onthinkCustom(tGameVariables)
 end
 
 
+--------------------------------------------------
+--                    "Harass"                  --
+--------------------------------------------------
 
 local function giveAll(bot, target)
   --Echo("Giving all")
@@ -292,10 +317,4 @@ function herobot:MoveToEasyCamp()
   self:OrderPosition(self.brain.hero, "Move", easyCamp)
 end
 
-function herobot:PrintStates()
-  local unit = self.brain.hero
-  local behavior = unit:GetBehavior()
-  if behavior then
-    --Echo(behavior:GetType())
-  end
-end
+
