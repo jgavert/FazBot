@@ -26,8 +26,6 @@ local levelupOrder = {1, 2, 1, 0, 1,
                       4, 4, 4, 4, 4}
 
 local itemsToBuy = {
-  'Item_MinorTotem',
-  'Item_MinorTotem',
   'Item_Marchers',
   'Item_GraveLocket',
   'Item_Steamboots',
@@ -155,11 +153,6 @@ function herobot:onthinkCustom(tGameVariables)
   --end
   if not self:IsDead() then
 
-    --perform shop
-    local gotGold = self:GetGold()
-    if self.brain.goldTreshold < gotGold then
-      PerformShop()
-    end
     local easyCamp = Vector3.Create(7547.6655, 7550.0581, 0.0)
     if self:GetTeam() == 1 then
       easyCamp = Vector3.Create(13000.6655, 13000.0581, 0.0)
