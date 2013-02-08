@@ -7,17 +7,23 @@ runfile 'bots/core_herobot.lua'
 runfile 'bots/utils/inventory.lua'
 runfile 'bots/utils/drawings.lua'
 runfile 'bots/utils/chat.lua'
-runfile 'bots/utils/courier_deliver.lua'
-runfile 'bots/utils/courier_upgrader.lua'
+runfile 'bots/utils/courier_controlling.lua'
 
 local ChatFns = ChatUtils()
 local DrawingsFns = Drawings()
-local CourierDeliverFns = CourierDeliver()
-local CourierUpgraderFns = CourierUpgrader()
+local CourierControllingFns = CourierControlling()
+local InventoryFns = Inventory()
 
 local print, tostring, tremove = _G.print, _G.tostring, _G.table.remove
 
 herobot.brain.goldTreshold = 0
+herobot.brain.reservingCourier = false
+
+local levelupOrder = {1, 2, 1, 0, 1,
+                      0, 1, 0, 0, 2,
+                      2, 2, 4, 3, 3,
+                      3, 4, 4, 4, 4,
+                      4, 4, 4, 4, 4}
 
 local itemsToBuy = {
   'Item_MinorTotem',
@@ -85,14 +91,6 @@ function herobot:PerformShop()
   updateTreshold(self)
   Echo("My current treshold: "..tostring(self.brain.goldTreshold))
 end
-
-
-
-local levelupOrder = {1, 2, 1, 0, 1,
-                      0, 1, 0, 0, 2,
-                      2, 2, 4, 3, 3,
-                      3, 4, 4, 4, 4,
-                      4, 4, 4, 4, 4}
 
 function herobot:SkillBuildWhatNext()
   --herobot.chat:AllChat("Leveled up! My team was " .. herobot.brain.hero:GetTeam())
