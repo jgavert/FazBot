@@ -3,11 +3,19 @@ local herobot = _G.object
 
 herobot.heroName = 'Hero_Vanya'
 
+-- EXPERIMENTAL --
+runfile 'bots/teams/FazBot/shop_utils.lua'
+
+
 runfile 'bots/core_herobot.lua'
 runfile 'bots/utils/inventory.lua'
 runfile 'bots/utils/drawings.lua'
 runfile 'bots/utils/chat.lua'
 runfile 'bots/utils/courier_controlling.lua'
+
+
+-- EXPERIMENTAL --
+local ShopFns = ShopUtils()
 
 local ChatFns = ChatUtils()
 local DrawingsFns = Drawings()
@@ -22,6 +30,7 @@ herobot.brain.reservingCourier = false
 --------------------------------------------------
 --            Hero skill and buylist            --
 --------------------------------------------------
+
 local levelupOrder = {1, 2, 1, 0, 1,
                       0, 1, 0, 0, 2,
                       2, 2, 4, 3, 3,
@@ -29,7 +38,6 @@ local levelupOrder = {1, 2, 1, 0, 1,
                       4, 4, 4, 4, 4}
 
 local itemsToBuy = {
-  'Item_Marchers',
   'Item_GraveLocket',
   'Item_Steamboots',
 }
@@ -77,11 +85,12 @@ end
 -- Update the treshold for when to buy next, what will be the money treshold?
 local function updateTreshold(bot)
   local nextItem = getNextItemToBuy()
-  bot.brain.goldTreshold = nextItem:GetCost()
+  bot.brain.goldTreshold = 999999 -- nextItem:GetCost()
 end
 
 -- buys the item and expects hero to have space
 function herobot:PerformShop()
+  updateTreshold(self)
   local hero = self.brain.hero
   local nextItem = nil
 
@@ -94,14 +103,19 @@ function herobot:PerformShop()
   else
     nextItem = getNextItemToBuy()
   end
-
+  Echo("My next item is " .. nextItem:GetName() .. ", Recipe costs "  .. tostring(nextItem:GetCost()))
+  Echo("HasItem " .. tostring(ShopFns.IsRecipe(tpStone)))
+  local componentsString = ShopFns.ItemArrayToString(ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem))
+  --local componentsString = ShopFns.ArrayToString({1, 2, 3, 4}) or " lol "
+  Echo(", Remaining components: "  .. componentsString)
+  --Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
   local itemCost = nextItem:GetCost()
   if itemCost <= self:GetGold() then
-    hero:PurchaseRemaining(nextItem)
-    tremove(itemsToBuy, 1)
+    --hero:PurchaseRemaining(nextItem)
+    --tremove(itemsToBuy, 1)
   end
   updateTreshold(self)
-  Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
+  --Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
 end
 
 --------------------------------------------------
@@ -187,10 +201,10 @@ function herobot:onthinkCustom(tGameVariables)
     --Echo("amount of enemies " .. tostring(#enemies))
     if Vector3.Distance2DSq(myPos, easyCamp) < 300*300 or canSeeEnemy(self) then
       if not self:Harass() then 
-        self:MoveToEasyCamp()
+        --self:MoveToEasyCamp()
       end
     else
-      self:MoveToEasyCamp()
+      --self:MoveToEasyCamp()
     end
   end
   --self:PrintStates()
