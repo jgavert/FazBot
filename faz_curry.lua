@@ -20,13 +20,72 @@ local print, tostring, tremove = _G.print, _G.tostring, _G.table.remove
 herobot.brain.goldTreshold = 0
 
 local itemsToBuy = {
-  'Item_MarkOfTheNovice'
+  'Item_MinorTotem',
+  'Item_MinorTotem',
+  'Item_Marchers',
+  'Item_GraveLocket',
+  'Item_Steamboots',
+}
+
+local potentialItems = {
+  'Item_Gloves3',
+  'Item_Evasion',
+  'Item_Brutalizer',
+  'Item_Pierce'
+}
+
+local buffItems = {
+  'Item_LifeSteal5',
+  'Item_DaemonicBreastplate'
+}
+
+local carryItems = {
+  'Item_Dawnbringer',
+  'Item_Lightning2',
+  'Item_Immunity'
 }
 
 local tpStone = HoN.GetItemDefinition("Item_HomecomingStone")
+
+-- Function to get Next item what we should buy
 local function getNextItemToBuy()
   return HoN.GetItemDefinition(itemsToBuy[1]) or tpStone
 end
+
+local function getNextCarryItemToBuy()
+  return HoN.GetItemDefinition(carryItems[1]) or nil
+end
+
+-- Update the treshold for when to buy next, what will be the money treshold?
+local function updateTreshold(bot)
+  local nextItem = getNextItemToBuy()
+  bot.brain.goldTreshold = nextItem:GetCost()
+end
+
+-- buys the item and expects hero to have space
+function herobot:PerformShop()
+  local hero = self.brain.hero
+  local nextItem = nil
+
+  if #itemsToBuy == 0 then
+    if #carryItems == 0 then
+      return
+    else
+      nextItem = getNextCarryItemToBuy()
+    end
+  else
+    nextItem = getNextItemToBuy()
+  end
+
+  local itemCost = nextItem:GetCost()
+  if itemCost <= self:GetGold() then
+    hero:PurchaseRemaining(nextItem)
+    tremove(itemsToBuy, 1)
+  end
+  updateTreshold(self)
+  Echo("My current treshold: "..tostring(self.brain.goldTreshold))
+end
+
 
 
 local levelupOrder = {1, 2, 1, 0, 1,
@@ -98,8 +157,17 @@ function herobot:onthinkCustom(tGameVariables)
   --end
   if not self:IsDead() then
 
-    --local easyCamp = Vector3.Create(7847.6655, 5150.0581, 0.0)
-    local easyCamp = Vector3.Create(7500.6655, 7500.0581, 0.0)
+    --perform shop
+    local gotGold = self:GetGold()
+    if self.brain.goldTreshold < gotGold then
+      PerformShop()
+    end
+    local easyCamp = Vector3.Create(7547.6655, 7550.0581, 0.0)
+    if self:GetTeam() == 1 then
+      easyCamp = Vector3.Create(13000.6655, 13000.0581, 0.0)
+    else
+      easyCamp = Vector3.Create(2000.6655, 2000.0581, 0.0)
+    end
     --DrawXPosition(easyCamp)
     local myPos = self.brain.hero:GetPosition()
 
@@ -204,29 +272,6 @@ function herobot:Harass()
   return false
 end
 
-function herobot:PerformShop()
---[[  if inventoryDebugPrint < HoN.GetGameTime() then
-    self.teamBrain.courier:PurchaseRemaining(tpStone)
-    local invTps = self.brain.hero:FindItemInInventory(tpStone:GetName())
-    if invTps then
-      Echo(tostring(#invTps))
-    end
-    if #invTps > 0 then
-      local tp = invTps[1]
-      Echo("courier can access: "..tostring(self.teamBrain.courier:CanAccess(tp)))
-      Echo("Slot: "..tostring(tp:GetSlot()))
-      self.teamBrain.courier:SwapItems(1, tp:GetSlot())
-    end
-    local inventory = self.brain.hero:GetInventory(true)
-    printInventory(inventory)
-    local inventory = self.teamBrain.courier:GetInventory(true)
-    printInventory(inventory)
-    inventoryDebugPrint = inventoryDebugPrint + 5000
-    --self.brain.goldTreshold = self.brain.goldTreshold + 100
-    --Echo("My current treshold: "..tostring(self.brain.goldTreshold))
-  end ]]
-end
-
 
 function herobot:MoveToEasyCamp()
   --local easyCamp = Vector3.Create(7847.6655, 5150.0581, 0.0)
@@ -254,15 +299,6 @@ function herobot:MoveToEasyCamp()
   end
 
   self:OrderPosition(self.brain.hero, "Move", easyCamp)
-end
-
-function herobot:GetCreepPosOnMyLane()
-  local lane = self.brain.myLane
-  if not lane or #lane < 1 then
-    Echo('No lane')
-    return nil
-  end
-  return self.teamBrain:GetFrontOfCreepWavePosition(lane.laneName)
 end
 
 function herobot:PrintStates()

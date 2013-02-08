@@ -1,7 +1,7 @@
 local _G = getfenv(0)
 local teambot = _G.object
 
-teambot.name = 'Team Berberi'
+teambot.name = 'Team Fazias'
 
 runfile 'bots/core_teambot.lua'
 
