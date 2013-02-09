@@ -17,6 +17,7 @@ local function ItemArrayToString(t)
   return string
 end
 
+
 local function IsRecipe(item)
   local item = item:GetComponents()
   if #item > 1 then
@@ -30,13 +31,17 @@ local function HasItem(unit, item)
   local ItemToFind = item
   for slot = 1, 12, 1 do
     local curItem = inventory[slot]
-    if curItem == ItemToFind then
+    local bRecipeCheck = curItem:GetTypeID() ~= item:GetTypeID() or curItem:IsRecipe()
+    if curItem:GetTypeID() == item:GetTypeID() and not bRecipeCheck then
       return true
     end
   end
   return false
 end
 
+-- example Dawnbringer
+-- returns a list where components of firesword is first, then recipe for it
+-- then frost swords components following that is the recipe for it and same for lightbringer
 local function RemainingComponentsOfItem(unit, item)
   --Echo(tostring(item:GetTypeID()) ..  '\n')
   if HasItem(unit, item) then
@@ -44,6 +49,7 @@ local function RemainingComponentsOfItem(unit, item)
   end
   local components = item:GetComponents()
   local numOfComponents = #components
+  local finalComponents = {}
 
   for slot = 1, numOfComponents, 1 do
     local curComponent = components[slot]
@@ -51,22 +57,28 @@ local function RemainingComponentsOfItem(unit, item)
     if not (curComponent:GetTypeID() == item:GetTypeID()) and IsRecipe(curComponent) then
       local componentsRecursion = RemainingComponentsOfItem(unit, curComponent)
       local num = #componentsRecursion
-      for recurComp = 1, num, 1 do
+
+      for recurComp = 1, numOfComponents, 1 do
         local this = componentsRecursion[recurComp]
-        if not (this:GetTypeID() == curComponent:GetTypeID()) then
-          tinsert(components, this)
+        if not (curComponent:GetTypeID() == item:GetTypeID()) then
+          tinsert(finalComponents, this)
         end
       end
+      --Echo(curComponent:GetName() .. " -> " .. ItemArrayToString(finalComponents))
+    else
+      tinsert(finalComponents, curComponent)
     end
   end
+  
+  local finalNum = #finalComponents
 
-  for slot = 1, numOfComponents, 1 do
-    local curComponent = components[slot]
+  for slot = 1, finalNum, 1 do
+    local curComponent = finalComponents[slot]
     if HasItem(unit, curComponent) then
-      tremove(components,curComponent)
+      tremove(finalComponents,curComponent)
     end
   end
-  return components
+  return finalComponents
 end
 
 local function GetNextComponent(unit, item)
