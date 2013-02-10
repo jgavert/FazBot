@@ -27,13 +27,20 @@ local function IsRecipe(item)
 end
 
 local function HasItem(unit, item)
+  Echo("HasItem called: " .. item:GetName())
   local inventory = unit:GetInventory(true)
   local ItemToFind = item
-  for slot = 1, 12, 1 do
+  for slot = 1, #inventory, 1 do
     local curItem = inventory[slot]
-    local bRecipeCheck = curItem:GetTypeID() ~= item:GetTypeID() or curItem:IsRecipe()
-    if curItem:GetTypeID() == item:GetTypeID() and not bRecipeCheck then
-      return true
+    --Echo(tostring(curItem))
+    if curItem then
+      Echo(curItem:GetTypeName())
+      local bRecipeCheck = curItem:GetTypeID() ~= item:GetTypeID() or curItem:IsRecipe()
+      if curItem:GetTypeID() == item:GetTypeID() and not bRecipeCheck then
+        return true
+      end
+    else
+      Echo(tostring(curItem))
     end
   end
   return false

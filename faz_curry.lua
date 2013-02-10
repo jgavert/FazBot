@@ -105,14 +105,15 @@ function herobot:PerformShop()
     nextItem = getNextItemToBuy()
   end
   Echo("My next item is " .. nextItem:GetName() .. ", Recipe costs "  .. tostring(nextItem:GetCost()))
-  Echo("HasItem " .. tostring(ShopFns.IsRecipe(tpStone)))
-  local componentsString = ShopFns.ItemArrayToString(ShopFns.RemainingComponentsOfItem(herobot.brain.hero, tpStone2))
+  Echo("HasItem " .. tostring(ShopFns.HasItem(herobot.brain.hero, nextItem)))
+  --local componentsString = ShopFns.ItemArrayToString(ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem))
   --local componentsString = ShopFns.ArrayToString({1, 2, 3, 4}) or " lol "
-  Echo(", Remaining components: "  .. componentsString)
-  --Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
+  --Echo("Remaining components: "  .. componentsString)
+  Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
+  local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
   local itemCost = nextItem:GetCost()
   if itemCost <= self:GetGold() then
-    --hero:PurchaseRemaining(nextItem)
+    hero:PurchaseRemaining(nextComponent)
     --tremove(itemsToBuy, 1)
   end
   updateTreshold(self)
