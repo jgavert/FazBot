@@ -48,9 +48,28 @@ local levelupOrder = {1, 2, 1, 0, 1,
                       4, 4, 4, 4, 4}
 
 local itemsToBuy = {
-  'Item_GraveLocket',
-  'Item_GraveLocket',
-  'Item_Steamboots'
+--  'Item_GraveLocket',
+  'Item_Steamboots',
+  'Item_Dawnbringer',
+  'Item_Lightning2',
+  'Item_LifeSteal5',
+  'Item_DaemonicBreastplate',
+  'Item_Immunity',
+  'Item_Pierce',
+  'Item_Pierce',
+  'Item_Pierce',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer',
+  'Item_Dawnbringer'
 }
 
 local potentialItems = {
@@ -98,13 +117,14 @@ end
 -- Update the treshold for when to buy next, what will be the money treshold?
 local function updateTreshold(bot)
   local nextItem = getNextItemToBuy()
-  if nextItem then
-    local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
-    local costOfComponent = nextComponent:GetCost()
-    bot.brain.goldTreshold = costOfComponent -- nextItem:GetCost()
-  else
-    bot.brain.goldTreshold = 3000 --costOfComponent -- nextItem:GetCost()
+  Echo(nextItem:GetName())
+  local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
+  if not nextComponent then
+    tremove(itemsToBuy, 1)
+    return 
   end
+  local costOfComponent = nextComponent:GetCost()
+  bot.brain.goldTreshold = costOfComponent -- nextItem:GetCost()
 end
 
 -- buys the item and expects hero to have space
@@ -218,7 +238,12 @@ function herobot:onthinkCustom(tGameVariables)
   --Echo("Alive!")
   --if not self.brain.myLane then
   --  self.brain.myLane = self.metadata:GetMiddleLane()
-  --end
+  --end,
+   if not assignedToTeam then
+     self.teamBrain:AddHero(self)
+     assignedToTeam = true
+   end 
+  CourierControlling.onthink(self.teamBrain, self, true)
   if not self:IsDead() then
 
     local easyCamp = Vector3.Create(7547.6655, 7550.0581, 0.0)
@@ -233,10 +258,10 @@ function herobot:onthinkCustom(tGameVariables)
     --Echo("amount of enemies " .. tostring(#enemies))
     if Vector3.Distance2DSq(myPos, easyCamp) < 300*300 or canSeeEnemy(self) then
       if not self:Harass() then 
-        --self:MoveToEasyCamp()
+        self:MoveToEasyCamp()
       end
     else
-      --self:MoveToEasyCamp()
+      self:MoveToEasyCamp()
     end
   end
   --self:PrintStates()

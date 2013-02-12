@@ -89,7 +89,7 @@ local function sellCheapestItem(unit)
     return
   end
 
-  unit.SellBySlot(index)
+  unit:SellBySlot(index)
 end
 
 
