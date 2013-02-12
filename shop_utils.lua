@@ -17,7 +17,7 @@ local function ItemArrayToString(t)
   return string
 end
 
-
+-- This is purely for ItemDefinitions
 local function IsRecipe(item)
   local item = item:GetComponents()
   if #item > 1 then
@@ -26,76 +26,74 @@ local function IsRecipe(item)
   return false
 end
 
+
+
 local function HasItem(unit, item)
-  Echo("HasItem called: " .. item:GetName())
+  --Echo("HasItem called: " .. item:GetName())
   local inventory = unit:GetInventory(true)
   local ItemToFind = item
   for slot = 1, #inventory, 1 do
     local curItem = inventory[slot]
+    local curItemDef = HoN.GetItemDefinition(curItem:GetTypeName())
     --Echo(tostring(curItem))
     if curItem then
-      Echo(curItem:GetTypeName())
-      local bRecipeCheck = curItem:GetTypeID() ~= item:GetTypeID() or curItem:IsRecipe()
+      --Echo(curItem:GetName())
+      local bRecipeCheck = curItemDef:GetTypeID() ~= item:GetTypeID() or curItem:IsRecipe()
       if curItem:GetTypeID() == item:GetTypeID() and not bRecipeCheck then
         return true
       end
-    else
-      Echo(tostring(curItem))
     end
   end
   return false
 end
 
--- example Dawnbringer
--- returns a list where components of firesword is first, then recipe for it
--- then frost swords components following that is the recipe for it and same for lightbringer
+
 local function RemainingComponentsOfItem(unit, item)
-  --Echo(tostring(item:GetTypeID()) ..  '\n')
-  if HasItem(unit, item) then
-    return {}
-  end
-  local components = item:GetComponents()
-  local numOfComponents = #components
-  local finalComponents = {}
-
-  for slot = 1, numOfComponents, 1 do
-    local curComponent = components[slot]
-    --Echo(tostring(curComponent:GetTypeID() == item:GetTypeID()))
-    if not (curComponent:GetTypeID() == item:GetTypeID()) and IsRecipe(curComponent) then
-      local componentsRecursion = RemainingComponentsOfItem(unit, curComponent)
-      local num = #componentsRecursion
-
-      for recurComp = 1, numOfComponents, 1 do
-        local this = componentsRecursion[recurComp]
-        if not (curComponent:GetTypeID() == item:GetTypeID()) then
-          tinsert(finalComponents, this)
-        end
-      end
-      --Echo(curComponent:GetName() .. " -> " .. ItemArrayToString(finalComponents))
-    else
-      tinsert(finalComponents, curComponent)
-    end
-  end
-  
-  local finalNum = #finalComponents
-
-  for slot = 1, finalNum, 1 do
-    local curComponent = finalComponents[slot]
-    if HasItem(unit, curComponent) then
-      tremove(finalComponents,curComponent)
-    end
-  end
-  return finalComponents
+  local remainingItems = unit:GetItemComponentsRemaining(item)
+  return remainingItems
 end
 
+
 local function GetNextComponent(unit, item)
+  --Echo("Getting the remaining components of " .. item:GetName())
   local RemainingComponents = RemainingComponentsOfItem(unit, item)
+  --Echo("Remaining components: "  .. RemainingComponents)
   local numOfComponents = #RemainingComponents
   if numOfComponents == 0 then
     return nil
   end
-  return RemainingComponents[1]
+  local components = RemainingComponentsOfItem(unit, RemainingComponents[1])
+  return components[1]
 end
+
+local function hasFullInventory(unit)
+  local inventory = unit:GetInventory(false)
+  return (#inventory == 6 )
+end
+
+local function sellCheapestItem(unit)
+  local inventory = unit:GetInventory(false)
+  local index = -1
+  local cost = 9999
+  for slot = 1,#inventory,1 do
+    local item = inventory[slot]
+    if item then
+      local itemCost = item:GetTotalCost()
+      if itemCost < cost then
+        index = slot
+        cost = itemCost
+      end
+    end
+  end
+  if index == -1 then
+    return
+  end
+
+  unit.SellBySlot(index)
+end
+
+
+
 
 function ShopUtils()
   local functions = {}
@@ -105,5 +103,7 @@ function ShopUtils()
   functions.ItemArrayToString = ItemArrayToString
   functions.RemainingComponentsOfItem = RemainingComponentsOfItem
   functions.IsRecipe = IsRecipe
+  functions.hasFullInventory = hasFullInventory
+  functions.sellCheapestItem = sellCheapestItem
   return functions
 end 

@@ -5,27 +5,37 @@ herobot.heroName = 'Hero_Vanya'
 
 -- EXPERIMENTAL --
 runfile 'bots/teams/FazBot/shop_utils.lua'
-
-
-runfile 'bots/core_herobot.lua'
-runfile 'bots/utils/inventory.lua'
-runfile 'bots/utils/drawings.lua'
-runfile 'bots/utils/chat.lua'
-runfile 'bots/utils/courier_controlling.lua'
-
-
 -- EXPERIMENTAL --
 local ShopFns = ShopUtils()
 
-local ChatFns = ChatUtils()
-local DrawingsFns = Drawings()
-local CourierControllingFns = CourierControlling()
-local InventoryFns = Inventory()
+runfile 'bots/core_herobot.lua'
+runfile 'bots/utils/inventory.lua'
+local InventoryFns = Utils_Inventory
+runfile 'bots/utils/drawings.lua'
+local DrawingsFns = Utils_Drawings
+runfile 'bots/utils/chat.lua'
+local ChatFns = Utils_Chat
+runfile 'bots/utils/courier_controlling.lua'
+local CourierControlling = Utils_CourierControlling
+runfile 'bots/utils/metadata_manager.lua'
+local MetadataManager = Utils_MetadataManager
+runfile "bots/utils/masks.lua"
+local MASKS = Utils_Masks
+runfile "bots/utils/priority_actions.lua"
+local PriorityActions = Utils_PriorityActions
+runfile "bots/utils/warding.lua"
+local Warding = Utils_Warding
+runfile "bots/utils/rune_control.lua"
+local RuneControl = Utils_RuneControl
 
 local print, tostring, tremove = _G.print, _G.tostring, _G.table.remove
 
 herobot.brain.goldTreshold = 0
-herobot.brain.reservingCourier = false
+
+herobot.data.canUpgradeCourier = true
+herobot.data.creepWavePos = nil
+herobot.data.currentAction = nil
+
 
 --------------------------------------------------
 --            Hero skill and buylist            --
@@ -39,7 +49,8 @@ local levelupOrder = {1, 2, 1, 0, 1,
 
 local itemsToBuy = {
   'Item_GraveLocket',
-  'Item_Steamboots',
+  'Item_GraveLocket',
+  'Item_Steamboots'
 }
 
 local potentialItems = {
@@ -71,6 +82,7 @@ end
 
 local tpStone = HoN.GetItemDefinition("Item_HomecomingStone")
 local tpStone2 = HoN.GetItemDefinition("Item_Dawnbringer")
+local Pretender = HoN.GetItemDefinition("Item_GraveLocket")
 
 --------------------------------------------------
 --              Item Handling code              --
@@ -86,7 +98,13 @@ end
 -- Update the treshold for when to buy next, what will be the money treshold?
 local function updateTreshold(bot)
   local nextItem = getNextItemToBuy()
-  bot.brain.goldTreshold = 999999 -- nextItem:GetCost()
+  if nextItem then
+    local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
+    local costOfComponent = nextComponent:GetCost()
+    bot.brain.goldTreshold = costOfComponent -- nextItem:GetCost()
+  else
+    bot.brain.goldTreshold = 3000 --costOfComponent -- nextItem:GetCost()
+  end
 end
 
 -- buys the item and expects hero to have space
@@ -104,21 +122,33 @@ function herobot:PerformShop()
   else
     nextItem = getNextItemToBuy()
   end
-  Echo("My next item is " .. nextItem:GetName() .. ", Recipe costs "  .. tostring(nextItem:GetCost()))
-  Echo("HasItem " .. tostring(ShopFns.HasItem(herobot.brain.hero, nextItem)))
-  --local componentsString = ShopFns.ItemArrayToString(ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem))
+  if not nextItem then
+    return
+  end
+  Echo("My next item is " .. nextItem:GetName())-- .. ", Recipe costs "  .. tostring(nextItem:GetCost()))
+  --Echo("HasItem " .. tostring(ShopFns.HasItem(herobot.brain.hero, nextItem)))
+  local componentsString = ShopFns.ItemArrayToString(ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem))
+  Echo("Remaining components version 1: "  .. componentsString)
   --local componentsString = ShopFns.ArrayToString({1, 2, 3, 4}) or " lol "
-  --Echo("Remaining components: "  .. componentsString)
+  --InventoryFns.PrintInventory(herobot.brain.hero:GetInventory(true))
   Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
+  local numItemsLeft = #ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem)
   local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
   local itemCost = nextItem:GetCost()
-  if itemCost <= self:GetGold() then
-    hero:PurchaseRemaining(nextComponent)
-    --tremove(itemsToBuy, 1)
+  if ShopFns.hasFullInventory(herobot.brain.hero) then
+    ShopFns.sellCheapestItem(herobot.brain.hero)
   end
+  --ShopFns.sellCheapestItem(herobot.brain.hero)
+  hero:PurchaseRemaining(nextComponent)
+  if numItemsLeft == 1 then
+    tremove(itemsToBuy, 1)
+  end
+  ----end
   updateTreshold(self)
-  --Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
-end
+  Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
+end--
+
+
 
 --------------------------------------------------
 --                     UTILS                    --
