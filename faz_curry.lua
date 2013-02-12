@@ -137,7 +137,7 @@ end
 -- buys the item and sells the lowest cost items to make room if full
 function herobot:PerformShop()
   if ShopFns.hasFullInventory(herobot.brain.hero, true) then
-    --Echo("Lets keep the stash spacey")
+    Echo("Lets keep the stash spacey")
     ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}, true) -- not really tested code, sellCheapestItem supports ignorelist
   end
 
