@@ -103,8 +103,6 @@ end
 --local nextChat = HoN.GetGameTime() + 1000
 
 local tpStone = HoN.GetItemDefinition("Item_HomecomingStone")
-local tpStone2 = HoN.GetItemDefinition("Item_Dawnbringer")
-local Pretender = HoN.GetItemDefinition("Item_GraveLocket")
 
 --------------------------------------------------
 --              Item Handling code              --
@@ -120,26 +118,29 @@ local function updateTreshold(bot)
   local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
   if not nextComponent then
     tremove(itemsToBuy, 1)
+    if ShopFns.hasFullInventory(herobot.brain.hero) then
+      herobot.invfull = true
+    else
+      herobot.invfull = false
+    end
     return 
   end
   local costOfComponent = nextComponent:GetCost()
   bot.brain.goldTreshold = costOfComponent -- nextItem:GetCost()
   --bot.brain.goldTreshold = 99999999999 -- nextItem:GetCost()
-
 end
 
--- buys the item and expects hero to have space
+-- buys the item and sells the lowest cost items to make room if full
 function herobot:PerformShop()
   if not self.wasInitialized then
     Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    Echo("Before update: " .. ShopFns.StringArrayToString(itemsToBuy))
+    --Echo("Before update: " .. ShopFns.StringArrayToString(itemsToBuy))
     itemsToBuy = ShopFns.checkInventory(herobot.brain.hero, itemsToBuy)
-    Echo("After update: " .. ShopFns.StringArrayToString(itemsToBuy))
+    --Echo("After update: " .. ShopFns.StringArrayToString(itemsToBuy))
     self.wasInitialized = true
   end
-  --updateTreshold(self)
   local hero = self.brain.hero
   local nextItem = nil
 
@@ -152,26 +153,24 @@ function herobot:PerformShop()
   local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
   if not nextComponent then
     tremove(itemsToBuy, 1)
+    if ShopFns.hasFullInventory(herobot.brain.hero) then
+      herobot.invfull = true
+    else
+      herobot.invfull = false
+    end
     return 
   end
-  Echo("My next item is " .. nextItem:GetName())-- .. ", Recipe costs "  .. tostring(nextItem:GetCost()))
-  --Echo("HasItem " .. tostring(ShopFns.HasItem(herobot.brain.hero, nextItem)))
-  local componentsString = ShopFns.ItemArrayToString(ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem))
+
+  Echo("My next item is " .. nextItem:GetName())
+  local remainingitems = ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem)
+  local componentsString = ShopFns.ItemArrayToString(remainingitems)
   Echo("Remaining components version 1: "  .. componentsString)
-  --local componentsString = ShopFns.ArrayToString({1, 2, 3, 4}) or " lol "
-  --InventoryFns.PrintInventory(herobot.brain.hero:GetInventory(true))
-  --Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
-  --local numItemsLeft = #ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem)
-  --local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
-  --local itemCost = nextItem:GetCost()
-  if ShopFns.hasFullInventory(herobot.brain.hero) then
-    ShopFns.sellCheapestItem(herobot.brain.hero)
+  if herobot.invfull then
+    Echo("Sold item!")
+    ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}) -- not really tested code, sellCheapestItem supports ignorelist
   end
   --ShopFns.sellCheapestItem(herobot.brain.hero)
   hero:PurchaseRemaining(nextComponent)
-  if numItemsLeft == 1 then
-    tremove(itemsToBuy, 1)
-  end
   ----end
   updateTreshold(self)
   Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
