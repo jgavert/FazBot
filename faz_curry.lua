@@ -48,13 +48,16 @@ local levelupOrder = {1, 2, 1, 0, 1,
                       4, 4, 4, 4, 4}
 
 local itemsToBuy = {
-  'Item_GraveLocket',
-  'Item_GraveLocket',
-  'Item_GraveLocket',
+  'Item_MinorTotem',
+  'Item_MinorTotem',
+  'Item_MinorTotem',
+  'Item_MinorTotem',
+  'Item_MinorTotem',
+  'Item_MinorTotem',
   'Item_Steamboots',
+  'Item_LifeSteal5',
   'Item_Dawnbringer',
   'Item_Lightning2',
-  'Item_LifeSteal5',
   'Item_DaemonicBreastplate',
   'Item_Immunity',
   'Item_Pierce',
@@ -123,6 +126,7 @@ local function updateTreshold(bot)
     else
       herobot.invfull = false
     end
+    updateTreshold(bot)
     return 
   end
   local costOfComponent = nextComponent:GetCost()
@@ -132,10 +136,15 @@ end
 
 -- buys the item and sells the lowest cost items to make room if full
 function herobot:PerformShop()
+  if ShopFns.hasFullInventory(herobot.brain.hero, true) then
+    --Echo("Lets keep the stash spacey")
+    ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}, true) -- not really tested code, sellCheapestItem supports ignorelist
+  end
+
   if not self.wasInitialized then
     Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    --Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    --Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     --Echo("Before update: " .. ShopFns.StringArrayToString(itemsToBuy))
     itemsToBuy = ShopFns.checkInventory(herobot.brain.hero, itemsToBuy)
     --Echo("After update: " .. ShopFns.StringArrayToString(itemsToBuy))
@@ -152,12 +161,7 @@ function herobot:PerformShop()
   end
   local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
   if not nextComponent then
-    tremove(itemsToBuy, 1)
-    if ShopFns.hasFullInventory(herobot.brain.hero) then
-      herobot.invfull = true
-    else
-      herobot.invfull = false
-    end
+    updateTreshold(self)
     return 
   end
 
@@ -168,9 +172,19 @@ function herobot:PerformShop()
   if herobot.invfull then
     Echo("Sold item!")
     ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}) -- not really tested code, sellCheapestItem supports ignorelist
+    herobot.invfull = false
   end
   --ShopFns.sellCheapestItem(herobot.brain.hero)
   hero:PurchaseRemaining(nextComponent)
+  if #remainingitems == 1 then
+    tremove(itemsToBuy, 1)
+    -- I think I have this in too many places....
+    if ShopFns.hasFullInventory(herobot.brain.hero) then
+      herobot.invfull = true
+    else
+      herobot.invfull = false
+    end
+  end
   ----end
   updateTreshold(self)
   Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
