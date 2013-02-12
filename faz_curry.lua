@@ -4,7 +4,7 @@ local herobot = _G.object
 herobot.heroName = 'Hero_Vanya'
 
 -- EXPERIMENTAL --
-runfile 'bots/teams/FazBot/shop_utils.lua'
+runfile 'bots/utils/shoputils/shop_utils.lua'
 -- EXPERIMENTAL --
 local ShopFns = ShopUtils()
 
