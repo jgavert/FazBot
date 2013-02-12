@@ -136,11 +136,13 @@ end
 
 -- buys the item and sells the lowest cost items to make room if full
 function herobot:PerformShop()
+  --Checks if the stash is full and sells cheapest thing from there if its full
   if ShopFns.hasFullInventory(herobot.brain.hero, true) then
     Echo("Lets keep the stash spacey")
     ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}, true) -- not really tested code, sellCheapestItem supports ignorelist
   end
 
+  --Checks for were we just initialized
   if not self.wasInitialized then
     Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     --Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -150,6 +152,7 @@ function herobot:PerformShop()
     --Echo("After update: " .. ShopFns.StringArrayToString(itemsToBuy))
     self.wasInitialized = true
   end
+  -- Lets get the next item to buy
   local hero = self.brain.hero
   local nextItem = nil
 
@@ -159,23 +162,29 @@ function herobot:PerformShop()
   else
     nextItem = getNextItemToBuy()
   end
+
+  -- Lets get the component (WHICH CAN BE NULL for reasons I cannot remember)
   local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
+  -- handle null case, which basically means that nextItem is already done
   if not nextComponent then
-    updateTreshold(self)
+    updateTreshold(self) -- updateTreshold basically handles this case which is why we call it here
     return 
   end
 
-  Echo("My next item is " .. nextItem:GetName())
+  --Echo("My next item is " .. nextItem:GetName())
   local remainingitems = ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem)
   local componentsString = ShopFns.ItemArrayToString(remainingitems)
-  Echo("Remaining components version 1: "  .. componentsString)
+  --Echo("Remaining components: "  .. componentsString)
+
+  -- Handle if our backpack was full of completed items, logic behind this is that when we finish a big item, we check if the backpack was full. We only want to sell when we are buying.
   if herobot.invfull then
     Echo("Sold item!")
-    ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}) -- not really tested code, sellCheapestItem supports ignorelist
-    herobot.invfull = false
+    ShopFns.sellCheapestItem(herobot.brain.hero, {"Item_Steamboots"}) -- not really tested code, sellCheapestItem supports ignorelist, here we prevent selling steamboots.
+    herobot.invfull = false --after selling, set invfull to false
   end
-  --ShopFns.sellCheapestItem(herobot.brain.hero)
   hero:PurchaseRemaining(nextComponent)
+
+  -- Here we see if the item had only 1 component, we can remove it from the itemsToBuy list because we already purchased it. Check immideatly for fullinv. 
   if #remainingitems == 1 then
     tremove(itemsToBuy, 1)
     -- I think I have this in too many places....
@@ -185,10 +194,11 @@ function herobot:PerformShop()
       herobot.invfull = false
     end
   end
-  ----end
+
+  -- Lastly update treshold to next component price.
   updateTreshold(self)
-  Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
-end--
+  --Echo("My current treshold: " .. tostring(self.brain.goldTreshold))
+end
 
 
 
