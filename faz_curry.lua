@@ -48,7 +48,9 @@ local levelupOrder = {1, 2, 1, 0, 1,
                       4, 4, 4, 4, 4}
 
 local itemsToBuy = {
---  'Item_GraveLocket',
+  'Item_GraveLocket',
+  'Item_GraveLocket',
+  'Item_GraveLocket',
   'Item_Steamboots',
   'Item_Dawnbringer',
   'Item_Lightning2',
@@ -72,6 +74,7 @@ local itemsToBuy = {
   'Item_Dawnbringer'
 }
 
+-- UNUSED ITEMLISTS
 local potentialItems = {
   'Item_Gloves3',
   'Item_Evasion',
@@ -110,14 +113,10 @@ local function getNextItemToBuy()
   return HoN.GetItemDefinition(itemsToBuy[1]) or tpStone
 end
 
-local function getNextCarryItemToBuy()
-  return HoN.GetItemDefinition(carryItems[1]) or nil
-end
-
 -- Update the treshold for when to buy next, what will be the money treshold?
 local function updateTreshold(bot)
   local nextItem = getNextItemToBuy()
-  Echo(nextItem:GetName())
+  --Echo(nextItem:GetName())
   local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
   if not nextComponent then
     tremove(itemsToBuy, 1)
@@ -125,25 +124,35 @@ local function updateTreshold(bot)
   end
   local costOfComponent = nextComponent:GetCost()
   bot.brain.goldTreshold = costOfComponent -- nextItem:GetCost()
+  --bot.brain.goldTreshold = 99999999999 -- nextItem:GetCost()
+
 end
 
 -- buys the item and expects hero to have space
 function herobot:PerformShop()
-  updateTreshold(self)
+  if not self.wasInitialized then
+    Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    Echo("WARNING BOT WAS RELOADED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    Echo("Before update: " .. ShopFns.StringArrayToString(itemsToBuy))
+    itemsToBuy = ShopFns.checkInventory(herobot.brain.hero, itemsToBuy)
+    Echo("After update: " .. ShopFns.StringArrayToString(itemsToBuy))
+    self.wasInitialized = true
+  end
+  --updateTreshold(self)
   local hero = self.brain.hero
   local nextItem = nil
 
   if #itemsToBuy == 0 then
-    if #carryItems == 0 then
-      return
-    else
-      nextItem = getNextCarryItemToBuy()
-    end
+    Echo("Nothing to buy!")
+    return
   else
     nextItem = getNextItemToBuy()
   end
-  if not nextItem then
-    return
+  local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
+  if not nextComponent then
+    tremove(itemsToBuy, 1)
+    return 
   end
   Echo("My next item is " .. nextItem:GetName())-- .. ", Recipe costs "  .. tostring(nextItem:GetCost()))
   --Echo("HasItem " .. tostring(ShopFns.HasItem(herobot.brain.hero, nextItem)))
@@ -151,10 +160,10 @@ function herobot:PerformShop()
   Echo("Remaining components version 1: "  .. componentsString)
   --local componentsString = ShopFns.ArrayToString({1, 2, 3, 4}) or " lol "
   --InventoryFns.PrintInventory(herobot.brain.hero:GetInventory(true))
-  Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
-  local numItemsLeft = #ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem)
-  local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
-  local itemCost = nextItem:GetCost()
+  --Echo("Next Component to be bought " .. ShopFns.GetNextComponent(herobot.brain.hero, nextItem):GetName())
+  --local numItemsLeft = #ShopFns.RemainingComponentsOfItem(herobot.brain.hero, nextItem)
+  --local nextComponent = ShopFns.GetNextComponent(herobot.brain.hero, nextItem)
+  --local itemCost = nextItem:GetCost()
   if ShopFns.hasFullInventory(herobot.brain.hero) then
     ShopFns.sellCheapestItem(herobot.brain.hero)
   end
@@ -243,7 +252,7 @@ function herobot:onthinkCustom(tGameVariables)
      self.teamBrain:AddHero(self)
      assignedToTeam = true
    end 
-  CourierControlling.onthink(self.teamBrain, self, true)
+  CourierControlling.onthink(self.teamBrain, self)
   if not self:IsDead() then
 
     local easyCamp = Vector3.Create(7547.6655, 7550.0581, 0.0)
